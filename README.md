@@ -1,4 +1,4 @@
-# Scout: AI Engineering Assistant with MCP, LangGraph & GraphRAG
+# AGENTIS: AI Engineering Assistant with MCP, LangGraph & GraphRAG
 
 ## Overview
 
