@@ -1,8 +1,8 @@
 """
 This file implements the MCP Client for our Langgraph Agent.
 
-MCP Clients are responsible for connecting and communicating with MCP servers. 
-This client is analagous to Cursor or Claude Desktop and you would configure them in the 
+MCP Clients are responsible for connecting and communicating with MCP servers.
+This client is analagous to Cursor or Claude Desktop and you would configure them in the
 same way by specifying the MCP server configuration in my_mcp/mcp_config.json.
 """
 
@@ -10,13 +10,13 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.graph import StateGraph
 from langchain_core.messages import HumanMessage, AIMessageChunk
 from typing import AsyncGenerator
-from scout.my_mcp.config import mcp_config
-from scout.graph import build_agent_graph, AgentState
+from my_mcp.config import mcp_config
+from graph import build_agent_graph, AgentState
 
 
 async def stream_graph_response(
         input: AgentState, graph: StateGraph, config: dict = {}
-        ) -> AsyncGenerator[str, None]:
+) -> AsyncGenerator[str, None]:
     """
     Stream the response from the graph while parsing out tool calls.
 
@@ -29,10 +29,10 @@ async def stream_graph_response(
         A processed string from the graph's chunked response.
     """
     async for message_chunk, metadata in graph.astream(
-        input=input,
-        stream_mode="messages",
-        config=config
-        ):
+            input=input,
+            stream_mode="messages",
+            config=config
+    ):
         if isinstance(message_chunk, AIMessageChunk):
             if message_chunk.response_metadata:
                 finish_reason = message_chunk.response_metadata.get("finish_reason", "")
@@ -44,7 +44,7 @@ async def stream_graph_response(
 
                 tool_name = tool_chunk.get("name", "")
                 args = tool_chunk.get("args", "")
-                
+
                 if tool_name:
                     tool_call_str = f"\n\n< TOOL CALL: {tool_name} >\n\n"
                 if args:
@@ -63,7 +63,7 @@ async def main():
     The MultiServerMCPClient allows connection to multiple MCP servers using a single client and config.
     """
     async with MultiServerMCPClient(
-        connections=mcp_config
+            connections=mcp_config
     ) as client:
         # the get_tools() method returns a list of tools from all the connected servers
         tools = client.get_tools()
@@ -73,7 +73,8 @@ async def main():
         graph_config = {
             "configurable": {
                 "thread_id": "1"
-            }
+            },
+            "recursion_limit": 100
         }
 
         while True:
@@ -85,16 +86,18 @@ async def main():
             print("\n ----  ASSISTANT  ---- \n\n")
 
             async for response in stream_graph_response(
-                input = AgentState(messages=[HumanMessage(content=user_input)]),
-                graph = graph, 
-                config = graph_config
-                ):
+                    input=AgentState(messages=[HumanMessage(content=user_input)]),
+                    graph=graph,
+                    config=graph_config
+            ):
                 print(response, end="", flush=True)
+
 
 if __name__ == "__main__":
     import asyncio
     # only needed if running in an ipykernel
     import nest_asyncio
+
     nest_asyncio.apply()
 
     asyncio.run(main())

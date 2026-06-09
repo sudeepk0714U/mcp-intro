@@ -1,14 +1,29 @@
-# MCP-Langgraph Integration Tutorial
+# MCP-Intro: MCP-Langgraph Integration Tutorial
 
-This tutorial demonstrates how to integrate Model Context Protocol (MCP) servers with Langgraph agents to create powerful, tool-enabled AI applications. The project showcases a data science assistant named Scout that can help users manage their data science projects using various MCP-powered tools.
+## Project Overview
 
-## Overview
+MCP-Intro demonstrates the integration of Model Context Protocol (MCP) servers with Langgraph agents to build a powerful, tool-enabled conversational AI assistant named Scout. Scout uses GPT-4.1 as the base LLM and orchestrates communication across multiple MCP servers to perform specialized tasks.
 
-The project implements a conversational AI agent that:
-- Uses GPT-4.1 as the base model
-- Integrates with multiple MCP servers for different functionalities
-- Uses Langgraph for orchestrating the conversation flow
-- Provides a streaming interface for real-time responses
+## Key Features
+
+- Conversational AI agent leveraging GPT-4.1-mini
+- Dynamic integration with multiple MCP servers providing tools for filesystem operations, data manipulation, version control, and more
+- Orchestration of conversation and tool usage using Langgraph's state graph
+- Real-time streaming of responses with tool call support
+- Autonomous engineering reflection system for analyzing execution results and improving assistant behavior
+
+## Project Structure
+
+```
+scout/
+├── graph.py           # Langgraph agent graph and prompt definition
+├── client.py          # MCP client for connecting to MCP servers and running conversation
+├── reflection.py      # Engineering reflection system for analyzing execution
+├── my_mcp/            # MCP server configs and custom implementations
+│   ├── config.py      # MCP server config loader
+│   └── mcp_config.json # MCP server definitions
+└── ...                # Other project files and directories
+```
 
 ## Prerequisites
 
@@ -16,105 +31,31 @@ The project implements a conversational AI agent that:
 - Node.js (for filesystem MCP server)
 - Docker (for GitHub MCP server)
 - UV package manager
-- OpenAI API key
-
-## Project Structure
-
-```
-scout/
-├── graph.py           # Langgraph agent implementation
-├── client.py          # MCP client and streaming interface
-├── client_utils.py    # Utility functions
-├── main.py           # Entry point
-└── my_mcp/           # MCP server configurations
-    ├── config.py     # Config loading and env var resolution
-    ├── mcp_config.json # MCP server definitions
-    └── local_servers/ # Custom MCP server implementations
-```
-
-## Setup
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd mcp-intro
-```
-
-2. Create and activate a virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-uv pip install -e .
-```
-
-4. Set up environment variables:
-Create a `.env` file with:
-```
-OPENAI_API_KEY=your_openai_api_key
-MCP_FILESYSTEM_DIR=/path/to/projects/directory
-MCP_GITHUB_PAT=your_github_personal_access_token
-```
-
-## MCP Servers
-
-This project integrates with four MCP servers:
-
-1. **Dataflow Server**: Custom implementation for data loading and querying
-2. **Filesystem Server**: Uses `@modelcontextprotocol/server-filesystem` for file operations
-3. **Git Server**: Uses `mcp-server-git` for local git operations
-4. **GitHub Server**: Uses the official GitHub MCP server for GitHub operations
+- OpenAI API key (configured in environment)
 
 ## Usage
 
-1. Start the application:
+1. Configure MCP servers in `my_mcp/mcp_config.json`.
+2. Run the client:
+
 ```bash
-python -m scout.client
+python scout/client.py
 ```
 
-2. Interact with Scout by typing your questions or requests. For example:
-```
-USER: Can you help me set up a new data science project?
-```
-
-3. Scout will use its tools to:
-- Create and manage project directories
-- Handle data loading and transformation
-- Manage version control
-- Interact with GitHub repositories
-
-4. Type 'quit' or 'exit' to end the session.
-
-## How It Works
-
-1. The `graph.py` file defines the Langgraph agent structure:
-- Sets up the system prompt and agent state
-- Configures the LLM (GPT-4)
-- Defines the conversation flow graph
-
-2. The `client.py` file:
-- Initializes the MCP client with multiple servers
-- Handles streaming responses
-- Manages the interactive session
-
-3. MCP servers provide tools for:
-- File system operations
-- Data manipulation
-- Git operations
-- GitHub interactions
+3. Interact with Scout via the command line.
+4. Type `quit` or `exit` to terminate the session.
 
 ## Extending the Project
 
-You can extend this project by:
-
-1. Adding new MCP servers in `my_mcp/local_servers/`
-2. Modifying the system prompt in `graph.py`
-3. Adding new tools to the agent
-4. Customizing the conversation flow
+- Add new MCP servers by implementing them under `my_mcp/local_servers/` and updating the config.
+- Modify or extend the prompt and tools in `scout/graph.py`.
+- Customize conversation flow using Langgraph state graph nodes and edges.
+- Enhance reflection capabilities in `scout/reflection.py`.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions and improvements are welcome! Please create pull requests.
+
+## License
+
+Specify your project license here.
