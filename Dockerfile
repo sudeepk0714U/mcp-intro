@@ -2,17 +2,21 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including Node.js 20
 RUN apt-get update && apt-get install -y \
-    nodejs \
-    npm \
     git \
     curl \
     openssh-client \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 RUN pip install --no-cache-dir uv
+
+# Install uvx
+RUN pip install --no-cache-dir uvx
 
 # Copy dependency files first (layer caching)
 COPY pyproject.toml uv.lock ./
