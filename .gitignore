@@ -1,1 +1,7 @@
 .env
+keys/
+__pycache__/
+*.pyc
+.venv/
+*.pem
+.DS_Store
