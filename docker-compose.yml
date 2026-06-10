@@ -4,11 +4,12 @@ services:
   scout:
     image: ghcr.io/sudeepk0714u/scout:latest
     container_name: scout
-    stdin_open: true    # keeps input open for conversation
-    tty: true           # enables terminal interaction
+    stdin_open: true
+    tty: true
     env_file:
       - .env
     volumes:
-      - ./projects:/app/projects    # user's projects persist locally
-      - ./keys:/app/keys            # user's pem files
+      - ./projects:/app/projects
+      - ./keys:/app/keys
+    pull_policy: always
     command: python scout/client.py
