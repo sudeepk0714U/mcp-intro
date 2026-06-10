@@ -17,18 +17,6 @@
         "${MCP_FILESYSTEM_DIR}"
       ]
     },
-
-    "bright-data": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "@brightdata/mcp"
-      ],
-      "env": {
-        "API_TOKEN": "${BRIGHTDATA_API_TOKEN}"
-      }
-    },
-
     "git": {
       "type": "stdio",
       "command": "uv",
