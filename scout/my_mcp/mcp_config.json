@@ -4,7 +4,7 @@
       "type": "stdio",
       "command": "python",
       "args": [
-        "/Users/sudeep/Desktop/PythonProject/mcp-intro/scout/my_mcp/local_servers/dataflow.py"
+        "/app/scout/my_mcp/local_servers/dataflow.py"
       ]
     },
 
@@ -19,6 +19,7 @@
     },
 
     "bright-data": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "@brightdata/mcp"
@@ -56,20 +57,21 @@
       "type": "stdio",
       "command": "python",
       "args": [
-        "/Users/sudeep/Desktop/PythonProject/mcp-intro/scout/my_mcp/local_servers/deployment/server.py"
+        "/app/scout/my_mcp/local_servers/deployment/server.py"
       ]
     },
-"ec2-deployment": {
-  "type": "stdio",
-  "command": "python",
-  "args": [
-    "/Users/sudeep/Desktop/PythonProject/mcp-intro/scout/my_mcp/local_servers/ec2_deployment/server.py"
-  ],
-  "env": {
-    "EC2_HOST": "${EC2_HOST}",
-    "EC2_USER": "${EC2_USER}",
-    "EC2_KEY_PATH": "{EC2_KEY_PATH}"
-  }
-}
+
+    "ec2-deployment": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "/app/scout/my_mcp/local_servers/ec2_deployment/server.py"
+      ],
+      "env": {
+        "EC2_HOST": "${EC2_HOST}",
+        "EC2_USER": "${EC2_USER}",
+        "EC2_KEY_PATH": "${EC2_KEY_PATH}"
+      }
+    }
   }
 }
