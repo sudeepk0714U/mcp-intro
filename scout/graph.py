@@ -1,12 +1,15 @@
+import os
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, add_messages
 from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 from langchain.tools import BaseTool
-
+from graph_memory_tool import graph_memory
 from typing import TypedDict, Annotated, List
-import os
+
+load_dotenv()
 
 
 class AgentState(TypedDict):
@@ -67,11 +70,40 @@ You will primarily work on this file to complete the user's requests.
 main.py should only be used to implement permanent changes to the data that will be committed to git.
 </code>
 
+<memory>
+You have access to a long-term memory tool called `graph_memory`.
+
+MANDATORY RULES — you MUST follow these without exception:
+
+1. ALWAYS call `graph_memory` FIRST before responding to ANY message that involves:
+   - An error, exception, or traceback
+   - Docker, Dockerfile, CI/CD, GitHub Actions
+   - EC2, deployment, SSH, security groups
+   - flake8, linting, Python formatting
+   - Any fix, solution, or best practice question
+
+2. NEVER attempt to fix an error without checking memory first.
+   Correct flow:
+   USER reports error → call graph_memory → use result to fix → respond
+
+3. If the user says anything like "it's not working", "I got an error", 
+   "this failed", "help me fix" — call graph_memory immediately.
+
+4. Only skip graph_memory for:
+   - Pure greetings ("hi", "hello")
+   - Creating new projects from scratch
+   - Loading or querying data files
+
+5. When graph_memory returns a result, always mention it:
+   "Based on past experience..." or "I've seen this before..."
+
+REMEMBER: Checking memory first is always faster and more accurate than guessing.
+</memory>
 <tools>
 {tools}
 </tools>
 
-Assist the customer in all aspects of their data science workflow.
+Assist the customer in all aspects of their data science and deployment workflow.
 """
 
     llm = ChatOpenAI(
@@ -79,73 +111,82 @@ Assist the customer in all aspects of their data science workflow.
         model="gpt-4.1-mini-2025-04-14"
     )
 
-    if tools:
+    # Always include graph_memory tool
+    all_tools = [graph_memory] + tools
 
-        llm = llm.bind_tools(tools)
+    llm = llm.bind_tools(all_tools)
 
-        tools_json = [
-            tool.model_dump_json(
-                include=["name", "description"]
-            )
-            for tool in tools
-        ]
-
-        system_prompt = system_prompt.format(
-            tools="\n".join(tools_json),
-            working_dir=os.environ.get("MCP_FILESYSTEM_DIR")
+    tools_json = [
+        tool.model_dump_json(
+            include=["name", "description"]
         )
+        for tool in all_tools
+    ]
+
+    formatted_prompt = system_prompt.format(
+        tools="\n".join(tools_json),
+        working_dir=os.environ.get("MCP_FILESYSTEM_DIR")
+    )
 
     def assistant(state: AgentState):
+        messages = state["messages"]
+        last_message = messages[-1] if messages else None
 
-        response = llm.invoke(
-            [SystemMessage(content=system_prompt)]
-            + state["messages"]
+        # Safely extract text content
+        if last_message is not None:
+            content = last_message.content
+            if isinstance(content, list):
+                # content is a list of blocks, extract text from each
+                last_message_text = " ".join(
+                    block.get("text", "") if isinstance(block, dict) else str(block)
+                    for block in content
+                )
+            else:
+                last_message_text = str(content)
+        else:
+            last_message_text = ""
+
+        # Keywords that should always trigger a memory check
+        memory_triggers = [
+            "error", "exception", "traceback", "failed", "not working",
+            "fix", "docker", "dockerfile", "ci/cd", "github actions",
+            "ec2", "deploy", "ssh", "flake8", "lint", "port", "container"
+        ]
+
+        should_check_memory = any(
+            trigger in last_message_text.lower()
+            for trigger in memory_triggers
         )
 
-        return {
-            "messages": [response]
-        }
+        system = formatted_prompt
+        if should_check_memory:
+            system += "\n\n⚠️ MEMORY REMINDER: The user's message contains a technical topic. You MUST call graph_memory tool FIRST before responding."
+
+        response = llm.invoke(
+            [SystemMessage(content=system)]
+            + messages
+        )
+        return {"messages": [response]}
 
     builder = StateGraph(AgentState)
 
-    builder.add_node(
-        "Scout",
-        assistant
-    )
+    builder.add_node("Scout", assistant)
+    builder.add_node("tools", ToolNode(all_tools))
 
-    builder.add_node(
-        "tools",
-        ToolNode(tools)
-    )
+    builder.add_edge(START, "Scout")
+    builder.add_conditional_edges("Scout", tools_condition)
+    builder.add_edge("tools", "Scout")
 
-    builder.add_edge(
-        START,
-        "Scout"
-    )
-
-    builder.add_conditional_edges(
-        "Scout",
-        tools_condition
-    )
-
-    builder.add_edge(
-        "tools",
-        "Scout"
-    )
-
-    return builder.compile(
-        checkpointer=MemorySaver()
-    )
+    return builder.compile(checkpointer=MemorySaver())
 
 
 if __name__ == "__main__":
-
-    from IPython.display import display, Image
-
     graph = build_agent_graph()
 
-    display(
-        Image(
-            graph.get_graph().draw_mermaid_png()
-        )
-    )
+    # Save as PNG file
+    png_data = graph.get_graph().draw_mermaid_png()
+
+    with open("agent_graph.png", "wb") as f:
+        f.write(png_data)
+
+    print("Graph saved to agent_graph.png")

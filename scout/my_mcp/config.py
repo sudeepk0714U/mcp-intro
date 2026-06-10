@@ -33,19 +33,25 @@ def resolve_env_vars(config: dict) -> dict:
 
 def convert_to_langchain_format(config: dict) -> dict:
     """
-    Convert Claude Desktop MCP config format to LangChain format.
+    Convert Claude Desktop MCP config format to LangChain 0.1.0+ format.
 
     Changes:
     - Extract servers from "mcpServers" wrapper
-    - Rename "type" to "connection_type"
+    - Rename "type" to "transport" (required by langchain-mcp-adapters 0.1.0+)
+    - Default transport to "stdio" if not specified
     """
-    # Extract the mcpServers content
     servers = config.get("mcpServers", config)
 
-    # Convert "type" to "connection_type" for each server
     for server_name, server_config in servers.items():
+        # Rename "type" to "transport"
         if "type" in server_config:
-            server_config["connection_type"] = server_config.pop("type")
+            server_config["transport"] = server_config.pop("type")
+        # Rename old "connection_type" to "transport"
+        elif "connection_type" in server_config:
+            server_config["transport"] = server_config.pop("connection_type")
+        # Default to stdio if neither exists
+        else:
+            server_config["transport"] = "stdio"
 
     return servers
 
@@ -57,6 +63,5 @@ if not config_file.exists():
 with open(config_file) as f:
     raw_config = json.load(f)
 
-# Convert format and resolve environment variables
 mcp_config = convert_to_langchain_format(raw_config)
 mcp_config = resolve_env_vars(mcp_config)
