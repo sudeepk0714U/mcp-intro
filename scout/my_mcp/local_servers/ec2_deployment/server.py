@@ -3,6 +3,10 @@ from mcp.server.fastmcp import FastMCP
 from deploy_to_ec2 import deploy_to_ec2
 from verify_deployment import verify_deployment
 from rollback_deployment import rollback_deployment
+from dotenv import load_dotenv
+load_dotenv()
+
+
 
 mcp = FastMCP("ec2-deployment")
 

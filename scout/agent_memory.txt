@@ -1,0 +1,70 @@
+1. Project Configuration & Tech Stack
+The core project context is defined by a central entity called PROJECT: todo-app. This project represents a web application built using specific framework, runtime, and deployment technologies. Specifically, the project uses language Python 3.13 and is built with framework FastAPI. For data persistence, the project utilizes database SQLite, while dependency management is handled via the package manager uv.
+
+For containerization and distribution, the project is containerized using Docker and publishes images to registry GHCR (GitHub Packages). The production environment is hosted on server AWS EC2, which is located in region us-east-1.
+
+2. CI/CD Pipeline & Infrastructure Assets
+The deployment lifecycle is managed by an automation system defined as INFRA: github_actions. This infrastructure block manages secrets CR_PAT, EC2_HOST, EC2_USER, and EC2_SSH_KEY. It executes workflow jobs named build-and-push and deploy. The continuous delivery pipeline targeting production interacts directly with INFRA: ghcr (which points to registry URL ghcr.io) and INFRA: ec2_instance.
+
+The production server INFRA: ec2_instance runs the Ubuntu 22.04 operating system within the us-east-1 region. It is identified by public_ip 44.204.147.86 and is identified by private_ip 172.31.91.2. The instance environment has status docker: installed and exposes open_ports 22, 80, and 443.
+
+The sequential progression of software delivery is governed by FLOW: cicd_pipeline. This lifecycle pipeline contains twelve discrete operational phases:
+
+step1: checkout code
+
+step2: setup python
+
+step3: install uv
+
+step4: uv sync
+
+step5: flake8 lint
+
+step6: docker build
+
+step7: docker login ghcr
+
+step8: docker push
+
+step9: ssh ec2
+
+step10: docker pull
+
+step11: docker stop old
+
+step12: docker run new
+
+3. Errors, Diagnostics, and Resolutions
+The project log details multiple technical challenges across various runtime contexts. The first is ERROR: yaml_indentation, which belongs to category github_actions, affects files .github/workflows/ci-cd.yml, and is tagged with yaml, github-actions, and workflow. It manifests symptom "Unexpected value '', Unexpected value 'workflow_dispatch'", which is caused by all keys under on: and jobs: residing at 0 indentation. This error is resolved by fix_id yaml_indentation_fix (which mandates: indent workflow_dispatch/push/pull_request by 2 spaces under on:, indent job name by 2 spaces under jobs:, and indent steps by 4 spaces) and is governed by rule_id yaml_hierarchy_rule stating that "YAML uses indentation to define hierarchy".
+
+A cluster of static analysis issues emerged under the linting umbrella. ERROR: flake8_E302 belongs to category linting, affects files todos.py, todo.py, schemas/todo.py, and main.py, and is tagged with flake8, pep8, and blank-lines. It shows symptom "expected 2 blank lines, found 1", is caused by having only 1 blank line before top-level functions or classes, and is resolved by fix_id flake8_E302_fix by adding 2 blank lines before top-level definitions to comply with rule_id pep8_blank_lines_rule.
+
+Similarly, ERROR: flake8_F401 belongs to category linting and is tagged with flake8 and imports. It shows symptom "imported but unused", is caused by TodoModel and todos being imported without invocation, and is resolved by fix_id flake8_F401_fix (remove unused imports or append # noqa: F401) adhering to rule_id imports_used_rule.
+
+ERROR: flake8_E402 belongs to category linting and is tagged with flake8 and imports. It shows symptom "module level import not at top of file", is caused by executable database connection code occurring before import strings, and is resolved by fix_id flake8_E402_fix (move all imports to the absolute top) under rule_id imports_top_rule.
+
+Whitespace validation failures include ERROR: flake8_W293 and ERROR: flake8_W292, which both belong to category linting. flake8_W293 shows symptom "blank line contains whitespace", is caused by invisible spaces/tabs, and is resolved by fix_id flake8_W293_fix (make blank lines truly empty) under rule_id trailing_whitespace_rule. flake8_W292 shows symptom "no newline at end of file", is caused by a missing trailing newline character, and is resolved by fix_id flake8_W292_fix (add newline at end of file) matching rule_id final_newline_rule.
+
+Containerization errors include ERROR: docker_invalid_reference, which belongs to category docker, shows symptom "invalid reference format", and is caused by uppercase characters in repository paths. It is resolved by fix_id lowercase_owner_fix via an evaluation string converting the repository owner to lowercase, enforcing rule_id docker_lowercase_rule.
+
+Another runtime fault, ERROR: uvicorn_not_found, belongs to category docker and is tagged with uv, uvicorn, and fastapi. It shows symptom "exec /app/.venv/bin/uvicorn: no such file or directory", is caused by the virtual environment's binaries being inaccessible via direct execution path in the Docker CMD, and is resolved by fix_id uv_run_fix by formatting the directive as CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"] to satisfy rule_id uv_run_rule.
+
+Networking and runtime visibility errors include ERROR: ec2_connection_refused, which belongs to category aws, shows symptom "ERR_CONNECTION_REFUSED", and is caused by port 80 being closed in the EC2 Security Group. It is resolved by fix_id open_http_port_fix (adding an inbound HTTP rule for port 80) to follow rule_id ec2_http_rule.
+
+Finally, ERROR: docker_ports_empty belongs to category docker, shows symptom "PORTS column empty in docker ps", and is caused by a missing port mapping flag during run initiation. It is resolved by fix_id docker_port_mapping_fix by invoking docker run -p 80:8000, following rule_id port_mapping_rule.
+
+Application routing issues are captured by ERROR: duplicate_routes, which belongs to category fastapi, shows symptom "duplicate route decorators", and is caused by copy-paste errors. It is resolved by fix_id duplicate_routes_fix (keep one decorator per function) under rule_id one_route_one_function_rule.
+
+4. Architectural Best Practices
+To safeguard the environment, architectural principles are explicitly enforced. BEST_PRACTICE: aws_iam belongs to category aws, enforces rule_id least_privilege_rule, and states that developers must "Never use root user for CI/CD". The engineering reason for this rule is that root credential leakage compromises the entire AWS cloud account; its technical implementation requires creating an IAM user with minimal required permissions.
+
+Container engineering is optimized via BEST_PRACTICE: dockerfile_layer_caching, which belongs to category docker and enforces rule_id layer_cache_rule. The rule dictates copying dependency definition files before copying application files. The engineering reason for this rule is that dependency installation layers remain cached unless lockfiles change; its technical implementation structural order is: COPY pyproject.toml, COPY uv.lock, RUN uv sync, and then COPY . ..
+
+Deterministic builds are guided by BEST_PRACTICE: uv_sync_frozen, which belongs to category python and enforces rule_id frozen_lock_rule. The rule mandates always using uv sync --frozen. The engineering reason for this rule is that it guarantees execution matching exact dependency versions.
+
+Resilience is guaranteed via BEST_PRACTICE: docker_restart_policy, which belongs to category docker and enforces rule_id restart_policy_rule. The rule demands always utilizing the flag --restart always. The engineering reason for this rule is ensuring the application container automatically survives unexpected daemon reboots and process crashes.
+
+5. Model Context Protocol (MCP) Interface
+The operations space includes an automation layer defined as MCP_SERVER: ec2_deployment. This server component exposes operational tools named deploy, verify, rollback, list_containers, and stop_container.
+
+The core operational unit is MCP_TOOL: deploy, which is exposed by the ec2_deployment server. This tool accepts input parameters named image_name, container_name, and port. When executed, the tool performs an orchestrated action sequence consisting of three steps: first, stop the old running application container; second, pull the latest image layer from the remote container registry; and third, run the new container instance using the provided configuration parameters.
