@@ -2,43 +2,37 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies including Node.js 20
+# Install system dependencies and Node.js 20
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     openssh-client \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && npm install -g npx \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
+# Install uv (includes uvx)
 RUN pip install --no-cache-dir uv
 
-# Install uvx
-RUN pip install --no-cache-dir uvx
-
-# Copy dependency files first (layer caching)
+# Copy dependency files first
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies
+# Install Python dependencies
 RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Verify key dependencies
+# Verify dependencies
 RUN python -c "import langchain; print('langchain OK')"
 RUN python -c "import paramiko; print('paramiko OK')"
 RUN python -c "import langgraph; print('langgraph OK')"
 
-# Copy project files
+# Copy application source
 COPY . .
 
 # Create required directories
-RUN mkdir -p /app/projects /app/keys
-
-# Set permissions for keys directory
-RUN chmod 700 /app/keys
+RUN mkdir -p /app/projects /app/keys && \
+    chmod 700 /app/keys
 
 EXPOSE 8000
 
