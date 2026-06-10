@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  scout:
+    image: ghcr.io/sudeepk0714u/scout:latest
+    container_name: scout
+    stdin_open: true    # keeps input open for conversation
+    tty: true           # enables terminal interaction
+    env_file:
+      - .env
+    volumes:
+      - ./projects:/app/projects    # user's projects persist locally
+      - ./keys:/app/keys            # user's pem files
+    command: python scout/client.py
