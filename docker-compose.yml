@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  scout:
+    image: ghcr.io/sudeepk0714u/scout:latest
+    container_name: scout
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
+    volumes:
+      - ./projects:/app/projects
+      - ./keys:/app/keys
+    pull_policy: always
+    command: python scout/client.py

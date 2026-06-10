@@ -1,49 +1,77 @@
 {
-    "mcpServers": {
-        "dataflow": {
-            "command": "python",
-            "args": [
-                "/Users/kennethliao/projects/tutorials/mcp-intro/scout/my_mcp/local_servers/dataflow.py"
-            ],
-            "transport": "stdio"
-        },
-        "filesystem": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@modelcontextprotocol/server-filesystem",
-                "${MCP_FILESYSTEM_DIR}"
-            ]
-        },
-        "git": {
-            "command": "uvx",
-            "args": [
-                "mcp-server-git"
-            ],
-            "transport": "stdio"
-        },
-        "github": {
-            "command": "docker",
-            "args": [
-                "run",
-                "-i",
-                "--rm",
-                "-e",
-                "GITHUB_PERSONAL_ACCESS_TOKEN",
-                "ghcr.io/github/github-mcp-server"
-            ],
-            "env": {
-                "GITHUB_PERSONAL_ACCESS_TOKEN": "${MCP_GITHUB_PAT}"
-            }
-        },
-        "supabase": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@supabase/mcp-server-supabase@latest",
-                "--access-token",
-                "${MCP_SUPABASE_PAT}"
-            ]
-        }
+  "mcpServers": {
+    "dataflow": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "/app/scout/my_mcp/local_servers/dataflow.py"
+      ]
+    },
+
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${MCP_FILESYSTEM_DIR}"
+      ]
+    },
+
+    "bright-data": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@brightdata/mcp"
+      ],
+      "env": {
+        "API_TOKEN": "${BRIGHTDATA_API_TOKEN}"
+      }
+    },
+
+    "git": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-git"
+      ]
+    },
+
+    "github": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${MCP_GITHUB_PAT}"
+      }
+    },
+
+    "deployment": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "/app/scout/my_mcp/local_servers/deployment/server.py"
+      ]
+    },
+
+    "ec2-deployment": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "/app/scout/my_mcp/local_servers/ec2_deployment/server.py"
+      ],
+      "env": {
+        "EC2_HOST": "${EC2_HOST}",
+        "EC2_USER": "${EC2_USER}",
+        "EC2_KEY_PATH": "${EC2_KEY_PATH}"
+      }
     }
+  }
 }
