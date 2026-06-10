@@ -31,8 +31,10 @@
 
     "git": {
       "type": "stdio",
-      "command": "uvx",
+      "command": "uv",
       "args": [
+        "tool",
+        "run",
         "mcp-server-git"
       ]
     },
